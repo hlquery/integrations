@@ -1,0 +1,16 @@
+{
+  "name": "hlquery-node-stripe-integration",
+  "version": "0.1.0",
+  "description": "Stripe integration scaffold that syncs to hlquery via the Node client.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "example": "node example.js"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.18.2",
+    "stripe": "^16.12.0"
+  }
+}

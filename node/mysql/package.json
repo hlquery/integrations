@@ -1,0 +1,13 @@
+{
+  "name": "hlquery-node-mysql-integration",
+  "version": "0.1.0",
+  "description": "Minimal MySQL to hlquery sync example using the Node client.",
+  "main": "example.js",
+  "scripts": {
+    "example": "node example.js"
+  },
+  "license": "BSD-3-Clause",
+  "dependencies": {
+    "mysql2": "^3.3.3"
+  }
+}
