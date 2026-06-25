@@ -83,27 +83,56 @@ function upsertDocument(Client $client, string $collection, array $document): vo
         return;
     }
 
-    if (strpos($add->getError() ?? '', 'already exists') !== false) {
+    $message = $add->getMessage();
+    if ($message === '' && is_array($add->getBody())) {
+        $body = $add->getBody();
+        $message = (string)($body['error'] ?? $body['message'] ?? '');
+    }
+
+    if ($add->getStatusCode() === 409 || stripos($message, 'already exists') !== false) {
         $update = $client->documents()->update($collection, $document['id'], $document);
         echo $update->isSuccess() ? "Updated {$document['id']}\n" : "Failed update {$document['id']}\n";
         return;
     }
 
-    echo "Failed storing {$document['id']}: " . ($add->getError() ?? 'unknown') . "\n";
+    if ($message === '') {
+        $message = $add->getError() ?: 'unknown';
+    }
+
+    echo "Failed storing {$document['id']}: {$message}\n";
 }
 
 // Pull existing IDs so we can optionally delete stale rows.
 function collectExistingIds(Client $client, string $collection): array
 {
-    $res = $client->documents()->list($collection, ['limit' => 1000]);
-    if (!$res->isSuccess()) {
-        return [];
-    }
-
-    $body = $res->getBody();
     $ids = [];
-    foreach ($body['documents'] ?? [] as $doc) {
-        $ids[] = $doc['id'] ?? '';
+    $offset = 0;
+    $limit = 1000;
+
+    while (true) {
+        $res = $client->documents()->list($collection, [
+            'limit' => $limit,
+            'offset' => $offset,
+        ]);
+
+        if (!$res->isSuccess()) {
+            break;
+        }
+
+        $body = $res->getBody();
+        $documents = is_array($body) && isset($body['documents']) && is_array($body['documents'])
+            ? $body['documents']
+            : [];
+
+        foreach ($documents as $doc) {
+            $ids[] = $doc['id'] ?? '';
+        }
+
+        if (count($documents) < $limit) {
+            break;
+        }
+
+        $offset += count($documents);
     }
 
     return array_filter($ids);
